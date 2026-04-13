@@ -6,14 +6,44 @@ import os
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="La Manada Feliz", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CSS PARA VISIBILIDAD EN MÓVIL ---
+# --- CSS PARA VISIBILIDAD COMPACTA (MOBILE-FRIENDLY) ---
+# Se han reducido los tamaños de fuente y padding para un diseño más denso.
 st.markdown("""
     <style>
-    html, body, [class*="st-"] { font-size: 1.1rem; }
-    .stMarkdown p { font-size: 1.2rem !important; }
-    .stCaption { font-size: 1.05rem !important; font-weight: 500; }
-    button p { font-size: 1.3rem !important; }
-    .stNumberInput input { font-size: 1.2rem !important; font-weight: bold; }
+    /* 1. Reducción global de fuente */
+    html, body, [class*="st-"] { font-size: 0.9rem !important; }
+
+    /* 2. Textos específicos más pequeños */
+    .stMarkdown p { font-size: 1.0rem !important; }
+    .stCaption { font-size: 0.85rem !important; font-weight: 400; color: #a0a0a0; }
+
+    /* 3. Títulos de sección */
+    h1 { font-size: 1.8rem !important; }
+    h2 { font-size: 1.4rem !important; }
+    h3 { font-size: 1.2rem !important; }
+
+    /* 4. Botones de acción (➕, ➖) extremadamente compactos */
+    /* Target específico para los botones pequeños en filas de inventario */
+    button[key*="_b_m_"] p, button[key*="_b_p_"] p {
+        font-size: 1.0rem !important;
+        font-weight: bold !important;
+    }
+    button[key*="_b_m_"], button[key*="_b_p_"] {
+        padding: 0px !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        width: 28px !important;
+        margin: 0px !important;
+    }
+
+    /* 5. Campo de entrada de número compacto */
+    .stNumberInput input {
+        font-size: 1.0rem !important;
+        font-weight: bold;
+        height: 28px !important;
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -161,7 +191,8 @@ with st.container(border=True):
                         use_container_width=True)
 
         if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
-        c_m, c_i, c_p = st.columns([0.8, 1.2, 0.8], vertical_alignment="center")
+        # Se han ajustado las columnas de los controles en el dashboard para que sean más compactas
+        c_m, c_i, c_p = st.columns([0.6, 1.8, 0.6], vertical_alignment="center")
         c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
@@ -190,7 +221,8 @@ with st.container(border=True):
                         use_container_width=True)
 
         if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
-        c_m, c_i, c_p = st.columns([0.8, 1.2, 0.8], vertical_alignment="center")
+        # Se han ajustado las columnas de los controles en el dashboard para que sean más compactas
+        c_m, c_i, c_p = st.columns([0.6, 1.8, 0.6], vertical_alignment="center")
         c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
@@ -227,10 +259,11 @@ def render_row(row, pref):
     if input_key not in st.session_state: st.session_state[input_key] = int(row['Stock_Actual'])
 
     with st.container(border=True):
-        c1, c2, c3, c4, c5 = st.columns([2.5, 0.4, 0.8, 1.2, 0.8], vertical_alignment="center")
+        # Solución: Columnas más compactas y alineadas para el modo compacto
+        c1, c2, c3, c4, c5 = st.columns([2.5, 0.3, 0.5, 1.2, 0.5], vertical_alignment="center")
         with c1:
             st.markdown(
-                f"<span style='color:{'#ff4b4b' if critico else '#1f1f1f'}; font-weight:bold;'>{'🚨' if critico else '✅'} {row['Producto']}</span>",
+                f"<span style='color:{'#ff4b4b' if critico else 'inherit'}; font-weight:bold;'>{'🚨' if critico else '✅'} {row['Producto']}</span>",
                 unsafe_allow_html=True)
             st.caption(f"Stock: {int(row['Stock_Actual'])} / Mín: {int(row['Stock_Mínimo'])} {row['Unidad']}")
         with c2:
@@ -249,6 +282,7 @@ def render_row(row, pref):
                         eliminar_item(id_p);
                         st.rerun()
 
+        # Botones y número ahora usan las columnas más compactas
         c3.button("➖", key=f"{pref}_b_m_{id_p}", on_click=ajustar_cantidad, args=(id_p, -1, input_key),
                   use_container_width=True)
         with c4:
