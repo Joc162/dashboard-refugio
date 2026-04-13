@@ -6,29 +6,47 @@ import os
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="La Manada Feliz", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CSS PARA VISIBILIDAD COMPACTA (MOBILE-FRIENDLY) ---
+# --- CSS PARA VISIBILIDAD COMPACTA Y BOTONES EN LÍNEA ---
 st.markdown("""
     <style>
-    /* 1. Evitar auto-zoom en iPhone (16px mínimo) y ajustar textos */
+    /* Ajustes generales de texto para móvil */
     html, body, [class*="st-"] { font-size: 16px !important; }
     .stMarkdown p { font-size: 16px !important; }
     .stCaption { font-size: 14px !important; color: #a0a0a0; }
 
-    /* 2. Cajas numéricas más compactas */
+    /* 1. OCULTAR LAS FLECHITAS NATIVAS DEL NUMBER INPUT PARA AHORRAR ESPACIO */
+    input[type="number"]::-webkit-inner-spin-button, 
+    input[type="number"]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type="number"] {
+        -moz-appearance: textfield;
+        text-align: center !important; /* Centrar el número */
+        font-size: 16px !important;
+        padding: 0px !important;
+    }
+
+    /* 2. FORZAR QUE NO SE APILEN LAS COLUMNAS EN MÓVIL */
+    @media (max-width: 600px) {
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: nowrap !important;
+            gap: 2px !important; /* Espacio mínimo entre elementos */
+        }
+        div[data-testid="column"] {
+            min-width: 0 !important; /* Permite que las columnas se hagan delgadas */
+        }
+    }
+
+    /* 3. Hacer las cajas y botones más compactos */
     div[data-testid="stNumberInputContainer"] {
         min-height: 2.2rem !important; 
         height: 2.2rem !important;
     }
-    input[type="number"] {
-        font-size: 16px !important;
-        padding-top: 0px !important;
-        padding-bottom: 0px !important;
-    }
-
-    /* 3. Botones más pequeños */
     .stButton>button {
         min-height: 2.2rem !important;
-        padding: 0px 10px !important;
+        height: 2.2rem !important;
+        padding: 0px 5px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -41,7 +59,7 @@ if 'df_inventario' not in st.session_state:
     if os.path.exists(DB_FILE):
         st.session_state.df_inventario = pd.read_csv(DB_FILE)
     else:
-        # Datos iniciales siguiendo la lógica de IDs
+        # Datos iniciales
         data = {
             'ID': [101, 201, 301, 401, 402],
             'Producto': ['Croquetas', 'Bravecto', 'Jabón Líquido', 'Agua (Tanque)', 'Gasolina'],
@@ -60,6 +78,14 @@ if 'cambios_sin_guardar' not in st.session_state:
 # --- FUNCIONES DE LÓGICA ---
 def trigger_cambio():
     st.session_state.cambios_sin_guardar = True
+
+
+def ajustar_cantidad(id_p, delta, input_key):
+    idx = st.session_state.df_inventario[st.session_state.df_inventario['ID'] == id_p].index[0]
+    nueva_cant = max(0, int(st.session_state.df_inventario.at[idx, 'Stock_Actual']) + int(delta))
+    st.session_state.df_inventario.at[idx, 'Stock_Actual'] = nueva_cant
+    st.session_state[input_key] = nueva_cant
+    trigger_cambio()
 
 
 def actualizar_desde_input(id_p, input_key):
@@ -169,9 +195,16 @@ with st.container(border=True):
                                            f"<b>{porc_a}%</b><br><span style='font-size:12px;'>{act_a} Tinacos</span>"),
                         use_container_width=True)
 
-        # Se eliminaron los botones redundantes, ahora solo queda la barra limpia
-        st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
-                        args=(id_a, "dash_agua"), label_visibility="collapsed")
+        if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
+
+        # Dashboard: Restaurados los botones con barra delgada
+        c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
+        c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
+                   use_container_width=True)
+        with c_i: st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
+                                  args=(id_a, "dash_agua"), label_visibility="collapsed")
+        c_p.button("➕", key="btn_p_agua", on_click=ajustar_cantidad, args=(id_a, 1, "dash_agua"),
+                   use_container_width=True)
 
     with col_gas:
         c_t, c_b = st.columns([4, 1])
@@ -194,9 +227,16 @@ with st.container(border=True):
                                            f"<b>{porc_g}%</b><br><span style='font-size:12px;'>{act_g} Bidones</span>"),
                         use_container_width=True)
 
-        # Se eliminaron los botones redundantes, ahora solo queda la barra limpia
-        st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
-                        args=(id_g, "dash_gas"), label_visibility="collapsed")
+        if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
+
+        # Dashboard: Restaurados los botones con barra delgada
+        c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
+        c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
+                   use_container_width=True)
+        with c_i: st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
+                                  args=(id_g, "dash_gas"), label_visibility="collapsed")
+        c_p.button("➕", key="btn_p_gas", on_click=ajustar_cantidad, args=(id_g, 1, "dash_gas"),
+                   use_container_width=True)
 
 # 3. GESTIÓN DE INVENTARIO
 st.markdown("---")
@@ -224,11 +264,10 @@ def render_row(row, pref):
     if input_key not in st.session_state: st.session_state[input_key] = int(row['Stock_Actual'])
 
     with st.container(border=True):
-        # Redujimos las columnas a solo 3 elementos esenciales para evitar amontonamiento
-        c1, c2, c3 = st.columns([5, 1, 3], vertical_alignment="center")
+        # Columnas ajustadas para acomodar los botones a los lados de la barra
+        c1, c2, c3, c4, c5 = st.columns([4, 1, 0.8, 1.2, 0.8], vertical_alignment="center")
 
         with c1:
-            # Aquí aplicamos el 'inherit' para que el color contraste correctamente siempre
             st.markdown(
                 f"<span style='color:{'#ff4b4b' if critico else 'inherit'}; font-weight:bold;'>{'🚨' if critico else '✅'} {row['Producto']}</span>",
                 unsafe_allow_html=True)
@@ -250,10 +289,14 @@ def render_row(row, pref):
                         eliminar_item(id_p)
                         st.rerun()
 
-        # Input limpio con sus propios botones de +/-
-        with c3:
+        # AQUÍ ESTÁN TUS BOTONES DE VUELTA [-] [  numero  ] [+]
+        c3.button("➖", key=f"{pref}_b_m_{id_p}", on_click=ajustar_cantidad, args=(id_p, -1, input_key),
+                  use_container_width=True)
+        with c4:
             st.number_input("Cant", value=int(row['Stock_Actual']), key=input_key, label_visibility="collapsed", step=1,
                             on_change=actualizar_desde_input, args=(id_p, input_key))
+        c5.button("➕", key=f"{pref}_b_p_{id_p}", on_click=ajustar_cantidad, args=(id_p, 1, input_key),
+                  use_container_width=True)
 
 
 idx_tab = st.session_state.pestana_activa
