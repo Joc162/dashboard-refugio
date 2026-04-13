@@ -27,46 +27,50 @@ st.markdown("""
         padding: 0px !important;
     }
 
-    /* 2. MAGIA: FORZAR COLUMNAS EN MÓVIL Y EVITAR DESBORDAMIENTO */
-    /* Ocultar los marcadores visualmente */
+    /* 2. SOLUCIÓN AL BUG VISUAL DE DESBORDAMIENTO EN MÓVILES */
+    /* Ocultar los marcadores para que no ocupen espacio */
     div.element-container:has(.inventory-marker), 
     div.element-container:has(.dashboard-marker) {
         display: none !important;
     }
 
     @media (max-width: 768px) {
-        /* SOLUCIÓN AL SCROLL HORIZONTAL: Asegurar que la regla solo se aplique 
-           al bloque más profundo y no a las columnas principales del dashboard */
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])), 
-        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) {
+        /* Forzar la fila única solo en el contenedor específico */
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])),
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) {
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 0.1rem !important; 
-            width: 100% !important; /* Limitar estrictamente al ancho de la pantalla */
+            width: 100% !important;
+            gap: 2px !important;
+            padding: 0 !important;
+            overflow: hidden !important; /* Evita cualquier scroll extra */
         }
 
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"],
-        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"] {
-            width: auto !important; /* Quitar el 100% nativo de Streamlit en móviles */
-            min-width: 0 !important; /* Permitir encogimiento matemático */
-            padding-left: 0.1rem !important;
-            padding-right: 0.1rem !important;
+        /* Eliminar TODOS los márgenes y anchos fijos internos de Streamlit */
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) *,
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) * {
+            min-width: 0 !important;
         }
 
-        /* Distribuir el espacio disponible de forma controlada (Inventario - 5 columnas) */
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 4 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 1 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 1 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(4) { flex: 1.5 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(5) { flex: 1 1 0% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"],
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"] {
+            padding: 0 1px !important; /* Reducir padding al mínimo absoluto */
+        }
 
-        /* Distribuir el espacio disponible de forma controlada (Dashboard - 3 botones) */
-        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 1 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 1.5 1 0% !important; }
-        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 1 1 0% !important; }
+        /* INVENTARIO: Asignación estricta de porcentajes (Total = 100%) */
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 0 0 46% !important; width: 46% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 0 0 12% !important; width: 12% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 0 0 12% !important; width: 12% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(4) { flex: 0 0 18% !important; width: 18% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(5) { flex: 0 0 12% !important; width: 12% !important; }
+
+        /* DASHBOARD: Asignación estricta de porcentajes (Total = 100%) */
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 0 0 28% !important; width: 28% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 0 0 44% !important; width: 44% !important; }
+        #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 0 0 28% !important; width: 28% !important; }
     }
 
-    /* 3. Hacer las cajas y botones más compactos */
+    /* 3. Hacer las cajas y botones más compactos en general */
     div[data-testid="stNumberInputContainer"] {
         min-height: 2.2rem !important; 
         height: 2.2rem !important;
@@ -74,7 +78,8 @@ st.markdown("""
     .stButton>button {
         min-height: 2.2rem !important;
         height: 2.2rem !important;
-        padding: 0px 5px !important;
+        padding: 0px 0px !important; /* Quitar relleno extra del botón */
+        width: 100% !important;      /* Expandir botón al máximo de su mini-columna */
     }
     </style>
     """, unsafe_allow_html=True)
@@ -225,7 +230,7 @@ with st.container(border=True):
 
         if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
 
-        # Dashboard Agua: Marcador específico para no interferir
+        # Dashboard Agua: Marcador
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
         c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
@@ -258,7 +263,7 @@ with st.container(border=True):
 
         if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
 
-        # Dashboard Gasolina: Marcador específico para no interferir
+        # Dashboard Gasolina: Marcador
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
         c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
