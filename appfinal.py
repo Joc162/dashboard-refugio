@@ -6,15 +6,13 @@ import os
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="La Manada Feliz", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CSS PARA VISIBILIDAD COMPACTA Y BOTONES EN LÍNEA ---
+# --- CSS ---
 st.markdown("""
     <style>
-    /* Ajustes generales de texto para móvil */
     html, body, [class*="st-"] { font-size: 16px !important; }
     .stMarkdown p { font-size: 16px !important; }
     .stCaption { font-size: 14px !important; color: #a0a0a0; }
 
-    /* 1. OCULTAR LAS FLECHITAS NATIVAS DEL NUMBER INPUT */
     input[type="number"]::-webkit-inner-spin-button, 
     input[type="number"]::-webkit-outer-spin-button { 
         -webkit-appearance: none; 
@@ -27,15 +25,12 @@ st.markdown("""
         padding: 0px !important;
     }
 
-    /* 2. SOLUCIÓN AL BUG VISUAL DE DESBORDAMIENTO EN MÓVILES */
-    /* Ocultar los marcadores para que no ocupen espacio */
     div.element-container:has(.inventory-marker), 
     div.element-container:has(.dashboard-marker) {
         display: none !important;
     }
 
     @media (max-width: 768px) {
-        /* Forzar la fila única solo en el contenedor específico */
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])),
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) {
             flex-direction: row !important;
@@ -43,10 +38,9 @@ st.markdown("""
             width: 100% !important;
             gap: 2px !important;
             padding: 0 !important;
-            overflow: hidden !important; /* Evita cualquier scroll extra */
+            overflow: hidden !important; 
         }
 
-        /* Eliminar TODOS los márgenes y anchos fijos internos de Streamlit */
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) *,
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) * {
             min-width: 0 !important;
@@ -54,23 +48,20 @@ st.markdown("""
 
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"],
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"] {
-            padding: 0 1px !important; /* Reducir padding al mínimo absoluto */
+            padding: 0 1px !important; 
         }
 
-        /* INVENTARIO: Asignación estricta de porcentajes (Total = 100%) */
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 0 0 46% !important; width: 46% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 0 0 12% !important; width: 12% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 0 0 12% !important; width: 12% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(4) { flex: 0 0 18% !important; width: 18% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(5) { flex: 0 0 12% !important; width: 12% !important; }
 
-        /* DASHBOARD: Asignación estricta de porcentajes (Total = 100%) */
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 0 0 28% !important; width: 28% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 0 0 44% !important; width: 44% !important; }
         #root div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 0 0 28% !important; width: 28% !important; }
     }
 
-    /* 3. Hacer las cajas y botones más compactos en general */
     div[data-testid="stNumberInputContainer"] {
         min-height: 2.2rem !important; 
         height: 2.2rem !important;
@@ -78,8 +69,8 @@ st.markdown("""
     .stButton>button {
         min-height: 2.2rem !important;
         height: 2.2rem !important;
-        padding: 0px 0px !important; /* Quitar relleno extra del botón */
-        width: 100% !important;      /* Expandir botón al máximo de su mini-columna */
+        padding: 0px 0px !important; 
+        width: 100% !important;      
     }
     </style>
     """, unsafe_allow_html=True)
@@ -92,7 +83,6 @@ if 'df_inventario' not in st.session_state:
     if os.path.exists(DB_FILE):
         st.session_state.df_inventario = pd.read_csv(DB_FILE)
     else:
-        # Datos iniciales
         data = {
             'ID': [101, 201, 301, 401, 402],
             'Producto': ['Croquetas', 'Bravecto', 'Jabón Líquido', 'Agua (Tanque)', 'Gasolina'],
@@ -167,7 +157,7 @@ def crear_grafico_dona(labels, values, colors, texto_centro):
 # --- INTERFAZ ---
 st.title("🐾 La Manada Feliz")
 
-# 1. ALERTAS DINÁMICAS
+# --- ALERTAS DINÁMICAS ---
 df_actual = st.session_state.df_inventario
 criticos = df_actual[df_actual['Stock_Actual'] < df_actual['Stock_Mínimo']]
 
@@ -177,7 +167,6 @@ if not criticos.empty:
         lista_detallada += f"\n* Tienes **{int(row['Stock_Actual'])}** {row['Unidad']} de **{row['Producto']}**, el mínimo es **{int(row['Stock_Mínimo'])}** {row['Unidad']}."
     st.error(f"🚨 **PRODUCTOS BAJOS:** {lista_detallada}")
 
-# Guardado
 if st.session_state.cambios_sin_guardar:
     with st.container(border=True):
         st.warning("⚠️ Hay cambios sin guardar.")
@@ -191,7 +180,7 @@ if st.session_state.cambios_sin_guardar:
             st.session_state.cambios_sin_guardar = False
             st.rerun()
 
-# 2. DASHBOARD
+# --- DASHBOARD ---
 st.subheader("📊 Dashboard")
 with st.container(border=True):
     col_inv, col_agua, col_gas = st.columns(3)
@@ -230,7 +219,6 @@ with st.container(border=True):
 
         if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
 
-        # Dashboard Agua: Marcador
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
         c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
@@ -263,7 +251,6 @@ with st.container(border=True):
 
         if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
 
-        # Dashboard Gasolina: Marcador
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
         c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
@@ -273,7 +260,7 @@ with st.container(border=True):
         c_p.button("➕", key="btn_p_gas", on_click=ajustar_cantidad, args=(id_g, 1, "dash_gas"),
                    use_container_width=True)
 
-# 3. GESTIÓN DE INVENTARIO
+# --- GESTIÓN DE INVENTARIO ---
 st.markdown("---")
 st.subheader("📋 Gestión de Inventario")
 
@@ -301,7 +288,6 @@ def render_row(row, pref):
     with st.container(border=True):
         c1, c2, c3, c4, c5 = st.columns([4, 1, 0.8, 1.2, 0.8], vertical_alignment="center")
 
-        # Marcador específico para Inventario
         c1.markdown("<span class='inventory-marker'></span>", unsafe_allow_html=True)
 
         with c1:
