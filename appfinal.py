@@ -14,7 +14,7 @@ st.markdown("""
     .stMarkdown p { font-size: 16px !important; }
     .stCaption { font-size: 14px !important; color: #a0a0a0; }
 
-    /* 1. OCULTAR LAS FLECHITAS NATIVAS DEL NUMBER INPUT PARA AHORRAR ESPACIO */
+    /* 1. OCULTAR LAS FLECHITAS NATIVAS DEL NUMBER INPUT */
     input[type="number"]::-webkit-inner-spin-button, 
     input[type="number"]::-webkit-outer-spin-button { 
         -webkit-appearance: none; 
@@ -22,19 +22,29 @@ st.markdown("""
     }
     input[type="number"] {
         -moz-appearance: textfield;
-        text-align: center !important; /* Centrar el número */
+        text-align: center !important;
         font-size: 16px !important;
         padding: 0px !important;
     }
 
-    /* 2. FORZAR QUE NO SE APILEN LAS COLUMNAS EN MÓVIL */
-    @media (max-width: 600px) {
-        div[data-testid="stHorizontalBlock"] {
+    /* 2. MAGIA: FORZAR QUE LAS COLUMNAS MARCADAS NO SE APILEN EN MÓVIL */
+    /* Ocultamos visualmente el contenedor del marcador para que no ocupe espacio */
+    div.element-container:has(.mobile-inline-marker) {
+        display: none !important;
+    }
+    @media (max-width: 768px) {
+        div[data-testid="stHorizontalBlock"]:has(.mobile-inline-marker) {
+            flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 2px !important; /* Espacio mínimo entre elementos */
+            align-items: center !important;
+            gap: 0.2rem !important; /* Espacio mínimo entre elementos */
         }
-        div[data-testid="column"] {
-            min-width: 0 !important; /* Permite que las columnas se hagan delgadas */
+        /* Hacemos que las columnas mantengan su proporción original */
+        div[data-testid="stHorizontalBlock"]:has(.mobile-inline-marker) > div[data-testid="column"] {
+            min-width: 0 !important;
+            width: auto !important;
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
         }
     }
 
@@ -197,8 +207,9 @@ with st.container(border=True):
 
         if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
 
-        # Dashboard: Restaurados los botones con barra delgada
+        # Dashboard Agua: Agregamos el marcador para mantener la línea
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
+        c_m.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
@@ -229,8 +240,9 @@ with st.container(border=True):
 
         if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
 
-        # Dashboard: Restaurados los botones con barra delgada
+        # Dashboard Gasolina: Agregamos el marcador para mantener la línea
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
+        c_m.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
@@ -264,8 +276,11 @@ def render_row(row, pref):
     if input_key not in st.session_state: st.session_state[input_key] = int(row['Stock_Actual'])
 
     with st.container(border=True):
-        # Columnas ajustadas para acomodar los botones a los lados de la barra
+        # Columnas tal como las dejaste para PC
         c1, c2, c3, c4, c5 = st.columns([4, 1, 0.8, 1.2, 0.8], vertical_alignment="center")
+
+        # Inyectamos el marcador oculto en la primera columna
+        c1.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
 
         with c1:
             st.markdown(
@@ -289,7 +304,6 @@ def render_row(row, pref):
                         eliminar_item(id_p)
                         st.rerun()
 
-        # AQUÍ ESTÁN TUS BOTONES DE VUELTA [-] [  numero  ] [+]
         c3.button("➖", key=f"{pref}_b_m_{id_p}", on_click=ajustar_cantidad, args=(id_p, -1, input_key),
                   use_container_width=True)
         with c4:
