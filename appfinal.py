@@ -7,42 +7,28 @@ import os
 st.set_page_config(page_title="La Manada Feliz", layout="wide", initial_sidebar_state="collapsed")
 
 # --- CSS PARA VISIBILIDAD COMPACTA (MOBILE-FRIENDLY) ---
-# Se han reducido los tamaños de fuente y padding para un diseño más denso.
 st.markdown("""
     <style>
-    /* 1. Reducción global de fuente */
-    html, body, [class*="st-"] { font-size: 0.9rem !important; }
+    /* 1. Evitar auto-zoom en iPhone (16px mínimo) y ajustar textos */
+    html, body, [class*="st-"] { font-size: 16px !important; }
+    .stMarkdown p { font-size: 16px !important; }
+    .stCaption { font-size: 14px !important; color: #a0a0a0; }
 
-    /* 2. Textos específicos más pequeños */
-    .stMarkdown p { font-size: 1.0rem !important; }
-    .stCaption { font-size: 0.85rem !important; font-weight: 400; color: #a0a0a0; }
-
-    /* 3. Títulos de sección */
-    h1 { font-size: 1.8rem !important; }
-    h2 { font-size: 1.4rem !important; }
-    h3 { font-size: 1.2rem !important; }
-
-    /* 4. Botones de acción (➕, ➖) extremadamente compactos */
-    /* Target específico para los botones pequeños en filas de inventario */
-    button[key*="_b_m_"] p, button[key*="_b_p_"] p {
-        font-size: 1.0rem !important;
-        font-weight: bold !important;
+    /* 2. Cajas numéricas más compactas */
+    div[data-testid="stNumberInputContainer"] {
+        min-height: 2.2rem !important; 
+        height: 2.2rem !important;
     }
-    button[key*="_b_m_"], button[key*="_b_p_"] {
-        padding: 0px !important;
-        height: 28px !important;
-        min-height: 28px !important;
-        width: 28px !important;
-        margin: 0px !important;
-    }
-
-    /* 5. Campo de entrada de número compacto */
-    .stNumberInput input {
-        font-size: 1.0rem !important;
-        font-weight: bold;
-        height: 28px !important;
+    input[type="number"] {
+        font-size: 16px !important;
         padding-top: 0px !important;
         padding-bottom: 0px !important;
+    }
+
+    /* 3. Botones más pequeños */
+    .stButton>button {
+        min-height: 2.2rem !important;
+        padding: 0px 10px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -74,14 +60,6 @@ if 'cambios_sin_guardar' not in st.session_state:
 # --- FUNCIONES DE LÓGICA ---
 def trigger_cambio():
     st.session_state.cambios_sin_guardar = True
-
-
-def ajustar_cantidad(id_p, delta, input_key):
-    idx = st.session_state.df_inventario[st.session_state.df_inventario['ID'] == id_p].index[0]
-    nueva_cant = max(0, int(st.session_state.df_inventario.at[idx, 'Stock_Actual']) + int(delta))
-    st.session_state.df_inventario.at[idx, 'Stock_Actual'] = nueva_cant
-    st.session_state[input_key] = nueva_cant
-    trigger_cambio()
 
 
 def actualizar_desde_input(id_p, input_key):
@@ -145,7 +123,7 @@ if st.session_state.cambios_sin_guardar:
     with st.container(border=True):
         st.warning("⚠️ Hay cambios sin guardar.")
         c1, c2 = st.columns(2)
-        if c1.button("💾 GUARDAR CAMBIOS", use_container_width=True, type="primary"):
+        if c1.button("💾 GUARDAR", use_container_width=True, type="primary"):
             st.session_state.df_inventario.to_csv(DB_FILE, index=False)
             st.session_state.cambios_sin_guardar = False
             st.rerun()
@@ -185,20 +163,15 @@ with st.container(border=True):
 
 
                 st.number_input("Mínimo Agua", value=min_a, key="m_agua_val", on_change=upd_min_agua, step=1)
+
         porc_a = int((act_a / min_a * 100)) if min_a > 0 else 0
         st.plotly_chart(crear_grafico_dona(["Lleno", "Vacío"], [act_a, max(0, min_a - act_a)], ['#3498db', '#f0f0f0'],
                                            f"<b>{porc_a}%</b><br><span style='font-size:12px;'>{act_a} Tinacos</span>"),
                         use_container_width=True)
 
-        if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
-        # Se han ajustado las columnas de los controles en el dashboard para que sean más compactas
-        c_m, c_i, c_p = st.columns([0.6, 1.8, 0.6], vertical_alignment="center")
-        c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
-                   use_container_width=True)
-        with c_i: st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
-                                  args=(id_a, "dash_agua"), label_visibility="collapsed")
-        c_p.button("➕", key="btn_p_agua", on_click=ajustar_cantidad, args=(id_a, 1, "dash_agua"),
-                   use_container_width=True)
+        # Se eliminaron los botones redundantes, ahora solo queda la barra limpia
+        st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
+                        args=(id_a, "dash_agua"), label_visibility="collapsed")
 
     with col_gas:
         c_t, c_b = st.columns([4, 1])
@@ -215,20 +188,15 @@ with st.container(border=True):
 
 
                 st.number_input("Mínimo Gas", value=min_g, key="m_gas_val", on_change=upd_min_gas, step=1)
+
         porc_g = int((act_g / min_g * 100)) if min_g > 0 else 0
         st.plotly_chart(crear_grafico_dona(["Lleno", "Vacío"], [act_g, max(0, min_g - act_g)], ['#f1c40f', '#f0f0f0'],
                                            f"<b>{porc_g}%</b><br><span style='font-size:12px;'>{act_g} Bidones</span>"),
                         use_container_width=True)
 
-        if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
-        # Se han ajustado las columnas de los controles en el dashboard para que sean más compactas
-        c_m, c_i, c_p = st.columns([0.6, 1.8, 0.6], vertical_alignment="center")
-        c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
-                   use_container_width=True)
-        with c_i: st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
-                                  args=(id_g, "dash_gas"), label_visibility="collapsed")
-        c_p.button("➕", key="btn_p_gas", on_click=ajustar_cantidad, args=(id_g, 1, "dash_gas"),
-                   use_container_width=True)
+        # Se eliminaron los botones redundantes, ahora solo queda la barra limpia
+        st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
+                        args=(id_g, "dash_gas"), label_visibility="collapsed")
 
 # 3. GESTIÓN DE INVENTARIO
 st.markdown("---")
@@ -236,17 +204,14 @@ st.subheader("📋 Gestión de Inventario")
 
 tab_names = ["🍎 Alimentación", "💊 Salud", "🧼 Limpieza", "📋 Todo"]
 
-# --- SOLUCIÓN: Memoria robusta de pestañas ---
 if "pestana_activa" not in st.session_state:
     st.session_state.pestana_activa = 0
 
 
 def sincronizar_pestana():
-    # Esta función se activa en el momento exacto en que cambias de pestaña
     st.session_state.pestana_activa = tab_names.index(st.session_state.selector_tabs)
 
 
-# El selector ahora usa la memoria segura (index=pestana_activa) y avisa cuando cambia (on_change)
 st.radio("Secciones", tab_names, horizontal=True, key="selector_tabs", index=st.session_state.pestana_activa,
          on_change=sincronizar_pestana, label_visibility="collapsed")
 
@@ -259,13 +224,16 @@ def render_row(row, pref):
     if input_key not in st.session_state: st.session_state[input_key] = int(row['Stock_Actual'])
 
     with st.container(border=True):
-        # Solución: Columnas más compactas y alineadas para el modo compacto
-        c1, c2, c3, c4, c5 = st.columns([2.5, 0.3, 0.5, 1.2, 0.5], vertical_alignment="center")
+        # Redujimos las columnas a solo 3 elementos esenciales para evitar amontonamiento
+        c1, c2, c3 = st.columns([5, 1, 3], vertical_alignment="center")
+
         with c1:
+            # Aquí aplicamos el 'inherit' para que el color contraste correctamente siempre
             st.markdown(
                 f"<span style='color:{'#ff4b4b' if critico else 'inherit'}; font-weight:bold;'>{'🚨' if critico else '✅'} {row['Producto']}</span>",
                 unsafe_allow_html=True)
             st.caption(f"Stock: {int(row['Stock_Actual'])} / Mín: {int(row['Stock_Mínimo'])} {row['Unidad']}")
+
         with c2:
             with st.popover("⚙️"):
                 def upd_m(id_p=id_p, pr=pref):
@@ -278,26 +246,20 @@ def render_row(row, pref):
                                 on_change=upd_m, step=1)
                 if row['Categoría'] != 'Recursos':
                     st.divider()
-                    if st.button(f"🗑️ Borrar {row['Producto']}", key=f"del_{pref}_{id_p}", use_container_width=True):
-                        eliminar_item(id_p);
+                    if st.button(f"🗑️ Borrar", key=f"del_{pref}_{id_p}", use_container_width=True):
+                        eliminar_item(id_p)
                         st.rerun()
 
-        # Botones y número ahora usan las columnas más compactas
-        c3.button("➖", key=f"{pref}_b_m_{id_p}", on_click=ajustar_cantidad, args=(id_p, -1, input_key),
-                  use_container_width=True)
-        with c4:
+        # Input limpio con sus propios botones de +/-
+        with c3:
             st.number_input("Cant", value=int(row['Stock_Actual']), key=input_key, label_visibility="collapsed", step=1,
                             on_change=actualizar_desde_input, args=(id_p, input_key))
-        c5.button("➕", key=f"{pref}_b_p_{id_p}", on_click=ajustar_cantidad, args=(id_p, 1, input_key),
-                  use_container_width=True)
 
 
-# Lógica principal usando la memoria segura
 idx_tab = st.session_state.pestana_activa
 cat_actual = "Todo" if idx_tab == 3 else CATEGORIAS[idx_tab]
 pfx = "gen" if cat_actual == "Todo" else cat_actual[:3].lower()
 
-# Renderizar solo la pestaña seleccionada
 items = df_actual[~df_actual['Categoría'].isin(['Recursos'])] if cat_actual == "Todo" else df_actual[
     df_actual['Categoría'] == cat_actual]
 
