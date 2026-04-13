@@ -27,25 +27,43 @@ st.markdown("""
         padding: 0px !important;
     }
 
-    /* 2. MAGIA: FORZAR QUE LAS COLUMNAS MARCADAS NO SE APILEN EN MÓVIL */
-    /* Ocultamos visualmente el contenedor del marcador para que no ocupe espacio */
-    div.element-container:has(.mobile-inline-marker) {
+    /* 2. MAGIA: FORZAR COLUMNAS EN MÓVIL Y EVITAR DESBORDAMIENTO */
+    /* Ocultar los marcadores visualmente */
+    div.element-container:has(.inventory-marker), 
+    div.element-container:has(.dashboard-marker) {
         display: none !important;
     }
+
     @media (max-width: 768px) {
-        div[data-testid="stHorizontalBlock"]:has(.mobile-inline-marker) {
+        /* SOLUCIÓN AL SCROLL HORIZONTAL: Asegurar que la regla solo se aplique 
+           al bloque más profundo y no a las columnas principales del dashboard */
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])), 
+        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) {
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            align-items: center !important;
-            gap: 0.2rem !important; /* Espacio mínimo entre elementos */
+            gap: 0.1rem !important; 
+            width: 100% !important; /* Limitar estrictamente al ancho de la pantalla */
         }
-        /* Hacemos que las columnas mantengan su proporción original */
-        div[data-testid="stHorizontalBlock"]:has(.mobile-inline-marker) > div[data-testid="column"] {
-            min-width: 0 !important;
-            width: auto !important;
+
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"],
+        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"] {
+            width: auto !important; /* Quitar el 100% nativo de Streamlit en móviles */
+            min-width: 0 !important; /* Permitir encogimiento matemático */
             padding-left: 0.1rem !important;
             padding-right: 0.1rem !important;
         }
+
+        /* Distribuir el espacio disponible de forma controlada (Inventario - 5 columnas) */
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 4 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 1 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 1 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(4) { flex: 1.5 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.inventory-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(5) { flex: 1 1 0% !important; }
+
+        /* Distribuir el espacio disponible de forma controlada (Dashboard - 3 botones) */
+        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(1) { flex: 1 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(2) { flex: 1.5 1 0% !important; }
+        div[data-testid="stHorizontalBlock"]:has(.dashboard-marker):not(:has(div[data-testid="stHorizontalBlock"])) > div[data-testid="column"]:nth-child(3) { flex: 1 1 0% !important; }
     }
 
     /* 3. Hacer las cajas y botones más compactos */
@@ -207,9 +225,9 @@ with st.container(border=True):
 
         if "dash_agua" not in st.session_state: st.session_state["dash_agua"] = act_a
 
-        # Dashboard Agua: Agregamos el marcador para mantener la línea
+        # Dashboard Agua: Marcador específico para no interferir
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
-        c_m.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
+        c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
@@ -240,9 +258,9 @@ with st.container(border=True):
 
         if "dash_gas" not in st.session_state: st.session_state["dash_gas"] = act_g
 
-        # Dashboard Gasolina: Agregamos el marcador para mantener la línea
+        # Dashboard Gasolina: Marcador específico para no interferir
         c_m, c_i, c_p = st.columns([1, 1.5, 1], vertical_alignment="center")
-        c_m.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
+        c_m.markdown("<span class='dashboard-marker'></span>", unsafe_allow_html=True)
         c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
                    use_container_width=True)
         with c_i: st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
@@ -276,11 +294,10 @@ def render_row(row, pref):
     if input_key not in st.session_state: st.session_state[input_key] = int(row['Stock_Actual'])
 
     with st.container(border=True):
-        # Columnas tal como las dejaste para PC
         c1, c2, c3, c4, c5 = st.columns([4, 1, 0.8, 1.2, 0.8], vertical_alignment="center")
 
-        # Inyectamos el marcador oculto en la primera columna
-        c1.markdown("<span class='mobile-inline-marker'></span>", unsafe_allow_html=True)
+        # Marcador específico para Inventario
+        c1.markdown("<span class='inventory-marker'></span>", unsafe_allow_html=True)
 
         with c1:
             st.markdown(
