@@ -2,8 +2,15 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import os
+from supabase import create_client, Client
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE SUPABASE ---
+# Streamlit leerá esto de tus variables de entorno locales (secrets.toml) o de la nube
+url: str = st.secrets["SUPABASE_URL"]
+key: str = st.secrets["SUPABASE_KEY"]
+supabase: Client = create_client(url, key)
+
+# --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(page_title="La Manada Feliz", layout="wide", initial_sidebar_state="collapsed")
 
 # --- CSS ---
@@ -75,24 +82,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-DB_FILE = 'inventario_santuario.csv'
 CATEGORIAS = ["Alimentación", "Salud", "Limpieza"]
 
 # --- GESTIÓN DE ESTADO ---
 if 'df_inventario' not in st.session_state:
-    if os.path.exists(DB_FILE):
-        st.session_state.df_inventario = pd.read_csv(DB_FILE)
-    else:
-        data = {
-            'ID': [101, 201, 301, 401, 402],
-            'Producto': ['Croquetas', 'Bravecto', 'Jabón Líquido', 'Agua (Tanque)', 'Gasolina'],
-            'Categoría': ['Alimentación', 'Salud', 'Limpieza', 'Recursos', 'Recursos'],
-            'Stock_Actual': [10, 60, 40, 1, 5],
-            'Stock_Mínimo': [4, 45, 20, 1, 2],
-            'Unidad': ['costales', 'piezas', 'litros', 'tinacos', 'bidones'],
-            'Tags': ['comida,perros', 'medicina', 'higiene', 'recursos', 'recursos']
-        }
-        st.session_state.df_inventario = pd.DataFrame(data)
+    # 1. Leer datos directamente desde Supabase
+    respuesta = supabase.table('inventario').select("*").execute()
+    # 2. Convertir la respuesta de Supabase a un DataFrame de Pandas
+    st.session_state.df_inventario = pd.DataFrame(respuesta.data)
 
 if 'cambios_sin_guardar' not in st.session_state:
     st.session_state.cambios_sin_guardar = False
@@ -172,11 +169,26 @@ if st.session_state.cambios_sin_guardar:
         st.warning("⚠️ Hay cambios sin guardar.")
         c1, c2 = st.columns(2)
         if c1.button("💾 GUARDAR", use_container_width=True, type="primary"):
-            st.session_state.df_inventario.to_csv(DB_FILE, index=False)
+            # 1. Guardar/Actualizar los datos actuales
+            datos_a_guardar = st.session_state.df_inventario.to_dict(orient='records')
+            supabase.table('inventario').upsert(datos_a_guardar).execute()
+
+            # 2. Borrar de la nube los que eliminaste en el programa (CÓDIGO CORREGIDO)
+            ids_actuales = st.session_state.df_inventario['ID'].tolist()
+            db_items = supabase.table('inventario').select('ID').execute()
+
+            for item in db_items.data:
+                id_en_nube = item['ID']
+                if id_en_nube not in ids_actuales:
+                    supabase.table('inventario').delete().eq('ID', id_en_nube).execute()
+
             st.session_state.cambios_sin_guardar = False
             st.rerun()
+
         if c2.button("🔄 DESCARTAR", use_container_width=True):
-            if os.path.exists(DB_FILE): st.session_state.df_inventario = pd.read_csv(DB_FILE)
+            # Si se descarta, volvemos a descargar lo que hay en la nube
+            respuesta = supabase.table('inventario').select("*").execute()
+            st.session_state.df_inventario = pd.DataFrame(respuesta.data)
             st.session_state.cambios_sin_guardar = False
             st.rerun()
 
