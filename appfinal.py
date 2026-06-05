@@ -423,7 +423,16 @@ def render_row(row, pref):
             st.markdown(
                 f"<span style='color:{'#ff4b4b' if critico else 'inherit'}; font-weight:bold;'>{'🚨' if critico else '✅'} {row['Producto']}</span>",
                 unsafe_allow_html=True)
-            st.caption(f"Stock: {int(row['Stock_Actual'])} / Mín: {int(row['Stock_Mínimo'])} {row['Unidad']}")
+
+            # --- NUEVO: Procesar y mostrar la etiqueta ---
+            texto_caption = f"Stock: {int(row['Stock_Actual'])} / Mín: {int(row['Stock_Mínimo'])} {row['Unidad']}"
+            tags_str = str(row.get('Tags', ''))
+
+            # Verificamos que la etiqueta exista y no esté vacía
+            if tags_str and tags_str.lower() != 'nan' and tags_str.strip() != '':
+                texto_caption += f" &nbsp;|&nbsp; 🏷️ {tags_str}"
+
+            st.caption(texto_caption)
 
         with c2:
             with st.popover("⚙️"):
