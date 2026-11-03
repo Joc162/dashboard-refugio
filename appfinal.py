@@ -117,11 +117,12 @@ def actualizar_desde_input(id_p, input_key):
 def agregar_item(nombre, cat, cant, mini, unit, tags_extra):
     df = st.session_state.df_inventario
 
-    # ---> RANGOS DE ID CORREGIDOS (Dice "Materiales") <---
-    rangos = {"Alimentación": 100, "Salud": 200, "Limpieza": 300, "Materiales": 500, "Tienda": 600}
-    r_base = rangos.get(cat, 700)  # 700 por defecto para cualquier otra cosa
+    # ---> RANGOS DE ID AMPLIADOS A BLOQUES DE 1000 <---
+    rangos = {"Alimentación": 1000, "Salud": 2000, "Limpieza": 3000, "Materiales": 5000, "Tienda": 6000}
+    r_base = rangos.get(cat, 7000)  # 7000 por defecto para cualquier otra cosa
 
-    ids_en_rango = df[(df['ID'] >= r_base) & (df['ID'] < r_base + 100)]['ID']
+    # Ahora el rango busca dentro de los siguientes 1000 números
+    ids_en_rango = df[(df['ID'] >= r_base) & (df['ID'] < r_base + 1000)]['ID']
     nuevo_id = ids_en_rango.max() + 1 if not ids_en_rango.empty else r_base + 1
 
     # 3. ETIQUETAS BASE AUTOMÁTICAS
@@ -344,7 +345,7 @@ with st.container(border=True):
             c_m.button("➖", key="btn_m_agua", on_click=ajustar_cantidad, args=(id_a, -1, "dash_agua"),
                        use_container_width=True)
             with c_i:
-                st.number_input("Cant Agua", value=act_a, step=1, key="dash_agua", on_change=actualizar_desde_input,
+                st.number_input("Cant Agua", step=1, key="dash_agua", on_change=actualizar_desde_input,
                                 args=(id_a, "dash_agua"), label_visibility="collapsed")
             c_p.button("➕", key="btn_p_agua", on_click=ajustar_cantidad, args=(id_a, 1, "dash_agua"),
                        use_container_width=True)
@@ -381,7 +382,7 @@ with st.container(border=True):
             c_m.button("➖", key="btn_m_gas", on_click=ajustar_cantidad, args=(id_g, -1, "dash_gas"),
                        use_container_width=True)
             with c_i:
-                st.number_input("Cant Gas", value=act_g, step=1, key="dash_gas", on_change=actualizar_desde_input,
+                st.number_input("Cant Gas", step=1, key="dash_gas", on_change=actualizar_desde_input,
                                 args=(id_g, "dash_gas"), label_visibility="collapsed")
             c_p.button("➕", key="btn_p_gas", on_click=ajustar_cantidad, args=(id_g, 1, "dash_gas"),
                        use_container_width=True)
@@ -453,7 +454,7 @@ def render_row(row, pref):
         c3.button("➖", key=f"{pref}_b_m_{id_p}", on_click=ajustar_cantidad, args=(id_p, -1, input_key),
                   use_container_width=True)
         with c4:
-            st.number_input("Cant", value=int(row['Stock_Actual']), key=input_key, label_visibility="collapsed", step=1,
+            st.number_input("Cant", key=input_key, label_visibility="collapsed", step=1,
                             on_change=actualizar_desde_input, args=(id_p, input_key))
         c5.button("➕", key=f"{pref}_b_p_{id_p}", on_click=ajustar_cantidad, args=(id_p, 1, input_key),
                   use_container_width=True)
